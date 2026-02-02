@@ -1,0 +1,40 @@
+# Render Blueprint for Clash Code
+# Deploy via: Render Dashboard -> New -> Blueprint
+# Or connect this repo and Render will detect render.yaml
+
+services:
+  # Next.js frontend
+  - type: web
+    runtime: node
+    name: clash-code
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SOCKET_URL
+        sync: false  # Set to your clash-code-server URL, e.g. https://clash-code-server.onrender.com
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+
+  # Socket.IO + Express game server
+  - type: web
+    runtime: node
+    name: clash-code-server
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false  # Set to your clash-code URL, e.g. https://clash-code.onrender.com
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      # PORT is set automatically by Render

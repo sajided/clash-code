@@ -43,6 +43,25 @@ To use a self-hosted Piston instance, set `PISTON_API_URL` in `server/.env`.
 - `FRONTEND_URL` - CORS origin (default: http://localhost:3000)
 - `PISTON_API_URL` - Piston API base URL (default: https://emkc.org/api/v2/piston)
 
+## Deploy on Render
+
+1. **Connect your repo** to [Render](https://render.com) and create a **Blueprint** (it will use `render.yaml`).
+
+2. **Set environment variables** when prompted (or in each service’s dashboard):
+
+   | Service | Variable | Value |
+   |---------|----------|-------|
+   | clash-code (frontend) | `NEXT_PUBLIC_SOCKET_URL` | Your backend URL, e.g. `https://clash-code-server.onrender.com` |
+   | clash-code | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+   | clash-code | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key |
+   | clash-code-server (backend) | `FRONTEND_URL` | Your frontend URL, e.g. `https://clash-code.onrender.com` |
+   | clash-code-server | `SUPABASE_URL` | Same as above |
+   | clash-code-server | `SUPABASE_SERVICE_KEY` | Your Supabase service role key |
+
+3. **First deploy**: deploy both services, note the URLs, then set `NEXT_PUBLIC_SOCKET_URL` and `FRONTEND_URL` and redeploy if needed.
+
+4. **Optional**: add `PISTON_API_URL` to the server if using a custom Piston instance.
+
 ## Tech Stack
 
 - **Frontend**: Next.js 16, React 19, Tailwind, NES.css, Monaco Editor, Socket.io
