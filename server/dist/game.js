@@ -1,12 +1,13 @@
 const CARD_COSTS = {
-    blind: 2,
-    freeze: 4,
+    fog: 2,
+    freeze: 3,
+    shuffle: 4,
     shield: 3,
 };
-const MANA_PER_TICK = 1;
-const MANA_TICK_INTERVAL_MS = 5000;
-const MAX_MANA = 10;
-const INITIAL_MANA = 3;
+const MAX_MANA = 5;
+const INITIAL_MANA = 0;
+const CHARS_PER_HALF_MANA = 20;
+const MANA_FROM_CHUNK = 0.5;
 export function generateRoomCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -18,6 +19,7 @@ export function createRoom(hostSocketId, name) {
         hostSocketId,
         difficulty: "Pupil",
         roundRatings: [800, 1200, 1600],
+        problemDifficulty: "Medium",
         players: new Map([
             [
                 hostSocketId,
@@ -127,14 +129,16 @@ export function resetRoundMana(room) {
         player.code = "";
     }
 }
-export function startManaTicker(room, onTick) {
-    return setInterval(() => {
-        for (const [socketId, player] of room.players) {
-            if (player.mana < MAX_MANA) {
-                player.mana = Math.min(MAX_MANA, player.mana + MANA_PER_TICK);
-                onTick(socketId, player.mana);
-            }
-        }
-    }, MANA_TICK_INTERVAL_MS);
+/** Grant mana from keystroke chunk. 20 valid chars = +0.5 mana (PRD §3). */
+export function addManaFromKeystrokes(room, socketId, charCount) {
+    const player = room.players.get(socketId);
+    if (!player || player.mana >= MAX_MANA)
+        return null;
+    const chunks = Math.floor(charCount / CHARS_PER_HALF_MANA);
+    if (chunks <= 0)
+        return null;
+    const add = Math.min(chunks * MANA_FROM_CHUNK, MAX_MANA - player.mana);
+    player.mana = Math.min(MAX_MANA, player.mana + add);
+    return { mana: player.mana };
 }
 export { CARD_COSTS, MAX_MANA, INITIAL_MANA };

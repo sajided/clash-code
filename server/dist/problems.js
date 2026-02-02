@@ -1,3 +1,5 @@
+import { supabase } from "./db.js";
+import { getProblemByDifficultyFromMerged } from "./merged-problems.js";
 export const HARDCODED_PROBLEMS = [
     {
         id: "cf-4a",
@@ -162,23 +164,75 @@ The contest offers n problems. For each problem we know which friend is sure abo
         rating: 800,
     },
 ];
-function pickClosestProblem(problems, targetRating, excludeIds) {
-    const candidates = problems
-        .filter((p) => !excludeIds.has(p.id))
-        .map((p) => ({ p, dist: Math.abs((p.rating ?? 800) - targetRating) }))
-        .sort((a, b) => a.dist - b.dist);
-    const minDist = candidates[0]?.dist ?? 0;
-    const ties = candidates.filter((c) => c.dist === minDist);
-    const chosen = ties[Math.floor(Math.random() * ties.length)] ?? candidates[0];
-    return chosen?.p ?? problems[0];
+function ratingToDifficulty(rating) {
+    if (rating <= 1000)
+        return "Easy";
+    if (rating <= 1400)
+        return "Medium";
+    return "Hard";
 }
-export function getProblemsForRounds(ratings) {
+function normalizeRow(row) {
+    const rawTests = row.sample_tests;
+    const sampleTests = Array.isArray(rawTests) && rawTests.length > 0
+        ? rawTests
+        : row.sample_input != null && row.sample_output != null
+            ? [{ input: row.sample_input, expectedOutput: row.sample_output }]
+            : [];
+    return {
+        id: row.id,
+        title: row.title,
+        description: row.description_html ?? row.title,
+        sampleTests,
+        difficulty: row.difficulty,
+    };
+}
+async function getProblemByDifficultyFromDb(difficulty) {
+    if (!supabase)
+        return null;
+    const { data, error } = await supabase
+        .from("problems")
+        .select("*")
+        .eq("difficulty", difficulty)
+        .limit(50);
+    if (error || !data?.length)
+        return null;
+    const row = data[Math.floor(Math.random() * data.length)];
+    return normalizeRow(row);
+}
+function pickByDifficulty(problems, difficulty, excludeIds) {
+    const filtered = problems.filter((p) => !excludeIds.has(p.id) && (p.difficulty ?? ratingToDifficulty(p.rating ?? 800)) === difficulty);
+    if (filtered.length === 0) {
+        const fallback = problems.filter((p) => !excludeIds.has(p.id));
+        return fallback[Math.floor(Math.random() * fallback.length)] ?? problems[0];
+    }
+    return filtered[Math.floor(Math.random() * filtered.length)];
+}
+export async function getProblemByDifficulty(difficulty) {
+    const fromMerged = getProblemByDifficultyFromMerged(difficulty);
+    if (fromMerged)
+        return fromMerged;
+    const fromDb = await getProblemByDifficultyFromDb(difficulty);
+    if (fromDb)
+        return fromDb;
     const pool = [...HARDCODED_PROBLEMS];
     const used = new Set();
-    const p1 = pickClosestProblem(pool, ratings[0], used);
-    used.add(p1.id);
-    const p2 = pickClosestProblem(pool, ratings[1], used);
-    used.add(p2.id);
-    const p3 = pickClosestProblem(pool, ratings[2], used);
+    return pickByDifficulty(pool, difficulty, used);
+}
+/** If selectedDifficulty is set, all 3 rounds use that difficulty; otherwise Easy, Medium, Hard. */
+export async function getProblemsForRounds(selectedDifficulty) {
+    const diff = selectedDifficulty ?? "Medium";
+    if (selectedDifficulty) {
+        const [p1, p2, p3] = await Promise.all([
+            getProblemByDifficulty(diff),
+            getProblemByDifficulty(diff),
+            getProblemByDifficulty(diff),
+        ]);
+        return [p1, p2, p3];
+    }
+    const [p1, p2, p3] = await Promise.all([
+        getProblemByDifficulty("Easy"),
+        getProblemByDifficulty("Medium"),
+        getProblemByDifficulty("Hard"),
+    ]);
     return [p1, p2, p3];
 }

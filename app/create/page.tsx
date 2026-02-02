@@ -1,38 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSocket } from "@/components/SocketProvider";
+
+const CREATE_TIMEOUT_MS = 10000;
 
 export default function CreatePage() {
   const router = useRouter();
   const socket = useSocket();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleRoomCreated = (payload: { roomId: string; code: string }) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setCreating(false);
       router.push(`/lobby/${payload.code}`);
     };
 
     socket.on("room_created", handleRoomCreated);
     return () => {
       socket.off("room_created", handleRoomCreated);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [router, socket]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     const trimmed = name.trim() || "Player 1";
     setCreating(true);
     socket.emit("create_room", trimmed);
+
+    timeoutRef.current = setTimeout(() => {
+      setCreating(false);
+      setError("Server did not respond. The backend may be starting up—try again.");
+      timeoutRef.current = null;
+    }, CREATE_TIMEOUT_MS);
   };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0d1b1e] p-8">
       <main className="flex w-full max-w-md flex-col items-center gap-8">
         <h1 className="font-sans text-2xl text-[#00ff41]">Create Room</h1>
+        {error && (
+          <p className="font-sans text-sm text-[#ff4444]" role="alert">
+            {error}
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
           <div className="nes-field">
             <label htmlFor="name" className="text-[#00ff41]">

@@ -43,24 +43,37 @@ To use a self-hosted Piston instance, set `PISTON_API_URL` in `server/.env`.
 - `FRONTEND_URL` - CORS origin (default: http://localhost:3000)
 - `PISTON_API_URL` - Piston API base URL (default: https://emkc.org/api/v2/piston)
 
-## Deploy on Render
+## Deploy on Render (manual setup)
 
-1. **Connect your repo** to [Render](https://render.com) and create a **Blueprint** (it will use `render.yaml`).
+Create two **Web Services** in the [Render Dashboard](https://dashboard.render.com):
 
-2. **Set environment variables** when prompted (or in each service’s dashboard):
+### 1. Backend (clash-code-server)
 
-   | Service | Variable | Value |
-   |---------|----------|-------|
-   | clash-code (frontend) | `NEXT_PUBLIC_SOCKET_URL` | Your backend URL, e.g. `https://clash-code-server.onrender.com` |
-   | clash-code | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
-   | clash-code | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key |
-   | clash-code-server (backend) | `FRONTEND_URL` | Your frontend URL, e.g. `https://clash-code.onrender.com` |
-   | clash-code-server | `SUPABASE_URL` | Same as above |
-   | clash-code-server | `SUPABASE_SERVICE_KEY` | Your Supabase service role key |
+- **New → Web Service** → connect your repo
+- **Root Directory**: `server`
+- **Build Command**: `npm install && npm run build`
+- **Start Command**: `npm start`
+- **Environment variables**:
+  - `FRONTEND_URL` — your frontend URL (set after creating it, e.g. `https://clash-code.onrender.com`)
+  - `SUPABASE_URL` — your Supabase project URL
+  - `SUPABASE_SERVICE_KEY` — your Supabase service role key
+- Deploy and copy the service URL (e.g. `https://clash-code-server-xxxx.onrender.com`)
 
-3. **First deploy**: deploy both services, note the URLs, then set `NEXT_PUBLIC_SOCKET_URL` and `FRONTEND_URL` and redeploy if needed.
+### 2. Frontend (clash-code)
 
-4. **Optional**: add `PISTON_API_URL` to the server if using a custom Piston instance.
+- **New → Web Service** → same repo
+- **Root Directory**: leave empty (repo root)
+- **Build Command**: `npm install && npm run build`
+- **Start Command**: `npm start`
+- **Environment variables**:
+  - `NEXT_PUBLIC_SOCKET_URL` — backend URL from step 1
+  - `NEXT_PUBLIC_SUPABASE_URL` — your Supabase project URL
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — your Supabase anon key
+- Deploy and copy the frontend URL
+
+### 3. Wire URLs
+
+Go back to the backend service and set `FRONTEND_URL` to your frontend URL, then redeploy the backend.
 
 ## Tech Stack
 

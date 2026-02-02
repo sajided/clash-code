@@ -19,13 +19,30 @@ import { getProblemsForRounds } from "./problems.js";
 import { executeCode } from "./execute.js";
 import type { GameRoom } from "./types.js";
 
+const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:3000")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes("*")) return cb(null, true);
+    cb(null, allowedOrigins.includes(origin));
+  },
+};
+
 const app = express();
-app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:3000" }));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const httpServer = createServer(app);
+const ioCors =
+  allowedOrigins.includes("*") || allowedOrigins.length === 0
+    ? { origin: true }
+    : { origin: allowedOrigins };
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
-  cors: { origin: process.env.FRONTEND_URL ?? "http://localhost:3000" },
+  cors: ioCors,
 });
 
 const rooms = new Map<string, GameRoom>();
