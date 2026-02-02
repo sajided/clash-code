@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Algo Royale (clash code)
 
-## Getting Started
+1v1 competitive programming with sabotage mechanics. Solve algorithm problems while disrupting your opponent.
 
-First, run the development server:
+## Quick Start
+
+1. **Install dependencies**
+
+```bash
+npm install
+cd server && npm install && cd ..
+```
+
+2. **Start the backend server** (in one terminal)
+
+```bash
+npm run dev:server
+```
+
+3. **Start the frontend** (in another terminal)
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Code Execution
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Uses the **Piston public API** (free, no API key required) at [emkc.org](https://emkc.org/api/v2/piston).
 
-## Learn More
+To use a self-hosted Piston instance, set `PISTON_API_URL` in `server/.env`.
 
-To learn more about Next.js, take a look at the following resources:
+## Configuration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Frontend (`/`)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `NEXT_PUBLIC_SOCKET_URL` - Backend URL (default: http://localhost:4000)
 
-## Deploy on Vercel
+### Backend (`/server`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `PORT` - Server port (default: 4000)
+- `FRONTEND_URL` - CORS origin (default: http://localhost:3000)
+- `PISTON_API_URL` - Piston API base URL (default: https://emkc.org/api/v2/piston)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+- **Frontend**: Next.js 16, React 19, Tailwind, NES.css, Monaco Editor, Socket.io
+- **Backend**: Express, Socket.io
+- **Execution**: Piston public API (C++ only for MVP)
+
+## Game Flow
+
+1. Create or join a room with a 6-digit code
+2. Host configures difficulty and starts the game
+3. Best of 3 rounds - first to pass sample tests wins each round
+4. Use Mana to play sabotage cards: Blind, Freeze, Shield
+5. First to win 2 rounds wins the game

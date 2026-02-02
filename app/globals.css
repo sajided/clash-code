@@ -1,26 +1,85 @@
 @import "tailwindcss";
+@import "nes.css/css/nes.min.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0d1b1e;
+  --foreground: #00ff41;
+  --neon-green: #00ff41;
+  --hot-pink: #ff005c;
+  --dark-void: #0d1b1e;
+  --accent: #ff005c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-neon-green: var(--neon-green);
+  --color-hot-pink: var(--hot-pink);
+  --color-dark-void: var(--dark-void);
+  --font-sans: var(--font-press-start);
+  --font-mono: var(--font-vt323);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--dark-void);
+  color: var(--neon-green);
+  font-family: var(--font-press-start), "Press Start 2P", cursive;
+  min-height: 100vh;
+}
+
+/* CRT scanline overlay */
+.crt-overlay::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  z-index: 9999;
+}
+
+/* Retro code font for editor */
+.font-code {
+  font-family: var(--font-vt323), "VT323", monospace;
+}
+
+/* Shuffle card glitch effect (RGB split) */
+@keyframes glitch {
+  0%, 100% { opacity: 0.9; transform: translate(0); }
+  25% { opacity: 1; transform: translate(-2px, 1px); }
+  50% { opacity: 1; transform: translate(2px, -1px); }
+  75% { opacity: 1; transform: translate(-1px, 2px); }
+}
+
+/* Crown pop animation when winning a tower */
+@keyframes crown-pop {
+  0% {
+    transform: translateY(20px) scale(0);
+    opacity: 0;
+  }
+  40% {
+    transform: translateY(0) scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-6px) scale(1);
+    opacity: 0;
+  }
+}
+
+.crown-anim {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 3.5rem;
+  font-size: 1.8rem;
+  animation: crown-pop 0.6s ease-out;
+  pointer-events: none;
 }
